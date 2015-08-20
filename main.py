@@ -34,4 +34,4 @@ if __name__ == '__main__': # Only run if this file has been called directly.
  logging.info('Destination: %s:%s.', application.args.server, application.args.port)
  
  reactor.run()
- logging.info('Server finished.')
+ logging.info('Remote lines received: %s. Commands received from clients: %s.', connection.remote_lines, connection.local_lines)

@@ -10,12 +10,17 @@ logger = logging.getLogger('Connection')
 
 local_transports = [] # The list of local transports.
 
+local_lines = 0
+remote_lines = 0
+
 class RemoteProtocol(LineReceiver):
  """
  This protocol will talk to the MUD servers, sending all the received data back to the client.
  """
  def lineReceived(self, line):
   """A line has been received. Parse it and send it on it's way."""
+  global remote_lines
+  remote_lines += 1
   remote_factory.line = line
   if application.args.log_messages:
    logger.info('<Line: %s>', line)
@@ -82,6 +87,8 @@ class LocalProtocol(LineReceiver):
  """
  def lineReceived(self, line):
   """Data received."""
+  global local_lines
+  local_lines += 1
   if application.args.log_commands:
    logger.info('<Command: %s>', line)
   if self.transport.authenticated: # No need to bug them again.
