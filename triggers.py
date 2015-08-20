@@ -1,5 +1,6 @@
 import re # Regular expressions.
 import logging # Logging routines.
+import connection # For the factory objects.
 
 logger = logging.getLogger('Triggers')
 
@@ -45,11 +46,12 @@ class Trigger(object):
   """Execute this trigger's code."""
   kwargs['trigger'] = self
   kwargs['Trigger'] = Trigger
+  kwargs['connection'] = connection
   try:
    eval(self.code, dict(args = args, **kwargs))
   except Exception as e:
    logger.exception(e)
-   local_factory.transport.write('Error in trigger: %s.\r\n' % self.title)
+   connection.send_local('Error in trigger %s: %s' % (self.title, str(e)))
 
 def match_trigger(line):
  """Match a trigger given a line of text."""
@@ -62,7 +64,7 @@ def match_trigger(line):
  for trigger in triggers:
   m = trigger.trigger.match(line)
   if m:
-   results.append((t, m))
-   if t.stop:
+   results.append((trigger, m))
+   if trigger.stop:
     break
  return results

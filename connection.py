@@ -153,3 +153,13 @@ try:
 except Exception as e:
  logger.exception(e)
  quit()
+
+def send_local(string):
+ """Write a string to all local transports."""
+ string += '\r\n' # Save us doing this multiple times.
+ for t in local_transports:
+  t.write(string)
+
+def remote_send(string):
+ """Send a string to the remote server."""
+ remote_factory.transport.write(string + '\r\n')

@@ -4,6 +4,7 @@ description = 'The client-agnostic MUD proxy'
 
 import argparse # Parse command line arguments.
 import sys # System-related stuff.
+import logging # So we can set up the root logger.
 
 parser = argparse.ArgumentParser(prog = name, version = version) # Add all command line arguments to this.
 
@@ -25,3 +26,5 @@ args = parser.parse_args() # Options get added to this object.
 if args.username and not args.password:
  from getpass import getpass
  args.password = getpass('Password:')
+
+logging.basicConfig(stream = args.log_file, level = args.log_level.upper(), format = args.log_format) # Set up basic logging using command line arguments. Must be done before any messages are logged.
