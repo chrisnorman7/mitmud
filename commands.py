@@ -5,9 +5,10 @@ The parser will look through the keys of the commands dictionary to find a comma
 
 A convenience function parse_args is available which will set command.args to the parsed command line arguments and return True upon success, or False on failure. Thus, a typical command's __call__ method could look like this:
 
-def __call__(self, line):
+def __call__(self, transport, line):
  if self.parse_args(line):
   # statements...
+  # Transport is the transport that issued the command.
 """
 
 import argparse, connection
@@ -41,6 +42,21 @@ class Command(object):
    self.args = None
    return False
  
- def __call__(self, line):
+ def __call__(self, transport, line):
   """Make this command callable."""
   raise NotImplementedError("This command hasn't had it's __call__ method overridden yet.")
+
+class Quit(Command):
+ """Closes your session without disconnecting the MUD."""
+ def __init__(self):
+  super(Quit, self).__init__('quit')
+ 
+ def __call__(self, transport, line):
+  """This command takes no arguments."""
+  if line:
+   connection.send_local('This command takes no arguments.')
+  else:
+   transport.write('Goodbye.\r\n')
+   transport.loseConnection()
+
+Quit()

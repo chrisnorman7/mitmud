@@ -102,7 +102,7 @@ class LocalProtocol(LineReceiver):
       args = ''
      if line in commands.commands:
       try:
-       commands.commands[line](args)
+       commands.commands[line](self.transport, args)
       except Exception as e:
        logger.exception(e)
        send_local(e.message)
@@ -150,7 +150,7 @@ class LocalProtocol(LineReceiver):
  def do_connect(self):
   """Connect to the remote server."""
   self.transport.authenticated = True # Don't ask them for credentials again.
-  if len(local_transports) == 1: # Only the connection that was just established.
+  if not remote_factory.transport:
    try:
     reactor.callFromThread(reactor.connectTCP, application.args.server, application.args.port, remote_factory)
     logger.info('Connected to MUD server.')
