@@ -8,11 +8,12 @@ import logging # So we can set up the root logger.
 
 parser = argparse.ArgumentParser(prog = name, version = version) # Add all command line arguments to this.
 
-parser.add_argument('host', type = str, help = 'The MUD hostname')
-parser.add_argument('port', type = int, help = 'The port the MUD server is running on')
+parser.add_argument('-s', '--server', metavar = 'hostname', help = 'The server to connect to')
+parser.add_argument('-p', '--port', type = int, help = 'The port the MUD server is running on')
+parser.add_argument('-f', '--file', metavar = 'filename', help = 'The file to load world information from')
 parser.add_argument('-m', '--max-connections', metavar = 'int', nargs = '?', default = 1, type = int, help = 'Maximum connections allowed (0 for unlimited)')
 parser.add_argument('-u', '--username', nargs = '?', help = 'Username to prevent anyone from using this proxy')
-parser.add_argument('-p', '--password', nargs = '?', help = 'Password protect this proxy')
+parser.add_argument('--password', nargs = '?', help = 'Password protect this proxy')
 parser.add_argument('-P', '--localport', dest = 'local_port', nargs = '?', metavar = 'port', default = 6486, type = int, help = 'The local port %(prog)s should run on')
 parser.add_argument('-c', '--command-char', nargs = '?', default = '/', help = 'The character which indicates this is a %(prog)s command')
 parser.add_argument('-l', '--logfile', dest = 'log_file', metavar = 'filename', type = argparse.FileType('w'), default = sys.stderr, help = 'Log %(prog)s output')

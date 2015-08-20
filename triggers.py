@@ -2,6 +2,8 @@ import re # Regular expressions.
 import logging # Logging routines.
 import connection # For the factory objects.
 
+code_re = re.compile(r'^\n( +)', re.M)
+
 logger = logging.getLogger('Triggers')
 
 triggers = [] # All the loaded triggers.
@@ -37,16 +39,22 @@ class Trigger(object):
   """Return the plain text version of the trigger's code."""
   return self._code
  
+ def format_code(self, code):
+  """Strips the first level of indent, preparing indented code for compilation."""
+  m = code_re.match(code)
+  if m:
+   return code.replace('\n%s' % m.groups()[0], '\n')
+  return code
+ 
  def set_code(self, code):
   """Set the code for this trigger."""
-  self._code = code
-  self.code = compile(code, '<Trigger: %s>' % self.title, self.compile_mode)
+  self._code = self.format_code(code)
+  self.code = compile(self._code, '<Trigger: %s>' % self.title, self.compile_mode)
  
  def eval(self, *args, **kwargs):
   """Execute this trigger's code."""
   kwargs['trigger'] = self
-  kwargs['Trigger'] = Trigger
-  kwargs['connection'] = connection
+  kwargs = dict(get_environment(), **kwargs)
   try:
    eval(self.code, dict(args = args, **kwargs))
   except Exception as e:
@@ -57,7 +65,7 @@ def match_trigger(line):
  """Match a trigger given a line of text."""
  results = [] # The list of triggers that match.
  if line in litteral_triggers:
-  t = literal_triggers[line]
+  t = litteral_triggers[line]
   results.append((t, None))
   if t.stop:
    return results
@@ -68,3 +76,13 @@ def match_trigger(line):
    if trigger.stop:
     break
  return results
+
+environment = dict() # For get_environment.
+
+def get_environment():
+ """Returns a cut-down version of globals."""
+ e = environment
+ for key, value in globals().items():
+  if not key.startswith('_'):
+   e[key] = value
+ return e

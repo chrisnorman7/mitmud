@@ -1,9 +1,10 @@
 import application # App-specific definitions.
 import triggers # Triggers and their objects.
 import logging # Logging routines.
+import commands # Local commands.
 from twisted.internet.protocol import ClientFactory, ServerFactory # Factories which connect sockets to protocols.
 from twisted.protocols.basic import LineReceiver # Protocol which which only does it's thing when \r\n is reached.
-from twisted.internet import reactor # For opening connections to the MUD servers.
+from twisted.internet import reactor # So we can connect to MUD servers.
 
 logger = logging.getLogger('Connection')
 
@@ -29,7 +30,7 @@ class RemoteProtocol(LineReceiver):
    if t.stop:
     break
   if remote_factory.line: # Only send the line if there's something to send.
-   line += '\r\n' # Add new line characters to the line.
+   line = remote_factory.line + '\r\n' # Add new line characters to the line.
    for t in local_transports:
     t.write(line)
  
@@ -84,12 +85,36 @@ class LocalProtocol(LineReceiver):
   if application.args.log_commands:
    logger.info('<Command: %s>', line)
   if self.transport.authenticated: # No need to bug them again.
-   remote_factory.transport.write(line + '\r\n')
+   if line.startswith(application.args.command_char):
+    line = line[1:]
+    if line:
+     if ' ' in line:
+      args = line[line.index(' ') + 1:]
+      line = line[:line.index(' ')]
+     else:
+      args = ''
+     if line in commands.commands:
+      try:
+       commands.commands[line](args)
+      except Exception as e:
+       logger.exception(e)
+       send_local(e.message)
+     else:
+      send_local('Command %s not recognised.' % line)
+    else:
+     if commands.commands:
+      send_local('Supported commands:')
+      for c in commands.commands.values():
+       send_local('%s:\r\n%s\r\n' % (c.name, c.__doc__ or 'None given.'))
+     else:
+      send_local('No commands implemented.')
+   else:
+    remote_factory.transport.write(line + '\r\n')
   else:
    if application.args.username: # The user must authenticate.
     if self.transport.username: # They've already entered it, let's see if they've entered a password too...
      if self.transport.username == application.args.username and line == application.args.password: #Congratulations: They've entered the right authentication details.
-      self.transport.write('Authentication successful. Now connecting to %s:%s.\r\n\r\n' % (application.args.host, application.args.port))
+      self.transport.write('Authentication successful. Now connecting to %s:%s.\r\n\r\n' % (application.args.server, application.args.port))
       self.do_connect()
      else:
       self.transport.write('Sorry, but the username or password you entered are incorrect.\r\nUsername: ')
@@ -120,12 +145,12 @@ class LocalProtocol(LineReceiver):
   self.transport.authenticated = True # Don't ask them for credentials again.
   if len(local_transports) == 1: # Only the connection that was just established.
    try:
-    reactor.callFromThread(reactor.connectTCP, application.args.host, application.args.port, remote_factory)
+    reactor.callFromThread(reactor.connectTCP, application.args.server, application.args.port, remote_factory)
     logger.info('Connected to MUD server.')
     return True # Connection successful.
    except Exception as e:
     logger.exception(e)
-    self.transport.write('Could not connect to the remote server: %s', str(e))
+    self.transport.write('Could not connect to the remote server: %s' % str(e))
     self.transport.loseConnection()
   return False # Either Exception was raised or there's already a  remote connection.
  
@@ -146,20 +171,16 @@ class LocalFactory(ServerFactory):
 
 remote_factory = RemoteFactory()
 
-try:
- listener = reactor.listenTCP(application.args.local_port, LocalFactory()) # Store that so we can permit only one connection at a time.
- max = application.args.max_connections
- logging.info('Now listening on port %s. Max connections: %s.', application.args.local_port, max if max else 'unlimited')
-except Exception as e:
- logger.exception(e)
- quit()
-
 def send_local(string):
  """Write a string to all local transports."""
  string += '\r\n' # Save us doing this multiple times.
  for t in local_transports:
   t.write(string)
 
-def remote_send(string):
+def send_remote(string):
  """Send a string to the remote server."""
  remote_factory.transport.write(string + '\r\n')
+
+def substitute(line):
+ """Substitute the line that will be sent to the local clients."""
+ remote_factory.line = line
