@@ -9,7 +9,10 @@ parser = argparse.ArgumentParser(prog = name, version = version) # Add all comma
 
 parser.add_argument('host', type = str, help = 'The MUD hostname')
 parser.add_argument('port', type = int, help = 'The port the MUD server is running on')
-parser.add_argument('-p', '--localport', dest = 'local_port', nargs = '?', metavar = 'port', default = 1234, type = int, help = 'The local port %(prog)s should run on')
+parser.add_argument('-m', '--max-connections', metavar = 'int', nargs = '?', default = 1, type = int, help = 'Maximum connections allowed (0 for unlimited)')
+parser.add_argument('-u', '--username', nargs = '?', help = 'Username to prevent anyone from using this proxy')
+parser.add_argument('-p', '--password', nargs = '?', help = 'Password protect this proxy')
+parser.add_argument('-P', '--localport', dest = 'local_port', nargs = '?', metavar = 'port', default = 6486, type = int, help = 'The local port %(prog)s should run on')
 parser.add_argument('-c', '--command-char', nargs = '?', default = '/', help = 'The character which indicates this is a %(prog)s command')
 parser.add_argument('-l', '--logfile', dest = 'log_file', metavar = 'filename', type = argparse.FileType('w'), default = sys.stderr, help = 'Log %(prog)s output')
 parser.add_argument('-L', '--loglevel', dest = 'log_level', nargs = '?', default = 'info', choices = ['debug', 'info', 'warning', 'error', 'critical'], help = 'The log level')
@@ -18,3 +21,7 @@ parser.add_argument('-M', '--log-messages', action = 'store_true', help = 'Log m
 parser.add_argument('-C', '--log-commands', action = 'store_true', help = 'Log commands coming from clients')
 
 args = parser.parse_args() # Options get added to this object.
+
+if args.username and not args.password:
+ from getpass import getpass
+ args.password = getpass('Password:')
