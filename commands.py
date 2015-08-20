@@ -29,7 +29,7 @@ class Command(object):
   self.name = name
   self.args = None
   self.parser = CommandParser(prog = name, version = 'Irrelevant')
-  commands[name] = self
+  commands[self.name] = self
  
  def parse_args(self, line):
   """Parse the args provided in line and make them available to the programmer as self.args."""
