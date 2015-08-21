@@ -90,14 +90,13 @@ class Stats(Command):
   p.add_argument('-l', '--lines', action = 'store_true', help = 'Shows lines received from server')
   p.add_argument('-c', '--commands', action = 'store_true', help = 'Shows commands sent from client.')
   p.add_argument('-t', '--transports', action = 'store_true', help = 'Shows the number of connected clients')
-  p.add_argument('-a', '--all', action = 'store_true', help = 'Shows everything')
  
  def __call__(self, transport, line):
   super(Stats, self).__call__(transport, line)
   if self.parse_args(line):
    a = self.args # Save typing again.
    transport.write('Statistics:\r\n')
-   if a.all:
+   if not a.uptime and not a.lines and not a.commands and not a.transports:
     for thing in ['uptime', 'lines', 'commands', 'transports']:
      setattr(a, thing, True)
    if a.uptime:
