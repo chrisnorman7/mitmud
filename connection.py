@@ -159,6 +159,8 @@ class LocalProtocol(LineReceiver):
     logger.exception(e)
     self.transport.write('Could not connect to the remote server: %s' % str(e))
     self.transport.loseConnection()
+  else:
+   self.transport.write('Welcome back.\r\n')
   return False # Either Exception was raised or there's already a  remote connection.
  
  def connectionLost(self, reason):

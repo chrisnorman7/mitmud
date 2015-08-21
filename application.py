@@ -2,6 +2,10 @@ name = 'MitMud'
 version = '0.1'
 description = 'The client-agnostic MUD proxy'
 
+from datetime import datetime
+
+start = datetime.now()
+
 import argparse # Parse command line arguments.
 import sys # System-related stuff.
 import logging # So we can set up the root logger.
